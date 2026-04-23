@@ -1,0 +1,41 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "GameClient",
+            "request": "launch",
+            "mainClass": "main.java.com.impostor.client.GameClient",
+            "projectName": "PGV-ImpostorGame_40ac6fec"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ImpostorGameApplication<impostor-game>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.impostor.server.ImpostorGameApplication",
+            "projectName": "impostor-game",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-GameClient<impostor-game>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.impostor.client.GameClient",
+            "projectName": "impostor-game",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-GameServer<impostor-game>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.impostor.server.GameServer",
+            "projectName": "impostor-game",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
