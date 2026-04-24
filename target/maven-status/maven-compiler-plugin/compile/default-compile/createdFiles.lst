@@ -1,12 +1,13 @@
-com\impostor\server\GameSession.class
-com\impostor\common\WordBank.class
 com\impostor\server\ImpostorGameApplication.class
 com\impostor\common\Protocol.class
 com\impostor\server\ClientHandler.class
-com\impostor\server\GameServer.class
 com\impostor\client\GameClient.class
 com\impostor\server\GameSession$Phase.class
+com\impostor\common\UIUtil.class
+com\impostor\model\Player$Role.class
+com\impostor\server\GameSession.class
+com\impostor\common\WordBank.class
+com\impostor\server\GameServer.class
 com\impostor\model\Player.class
 com\impostor\client\GameClient$PendingAction.class
 com\impostor\common\WordBank$Entry.class
-com\impostor\model\Player$Role.class

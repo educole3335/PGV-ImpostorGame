@@ -1,6 +1,7 @@
 package com.impostor.client;
 
 import com.impostor.common.Protocol;
+import com.impostor.common.UIUtil;
 
 import java.io.*;
 import java.net.Socket;
@@ -43,8 +44,6 @@ public class GameClient {
     private PrintWriter out;
     private volatile boolean running = true;
     private final List<String> voteCandidates = new ArrayList<>();
-
-    private static final String SEP = "==================================================";
 
     // ── Constructor ──────────────────────────────────────────────────────────
 
@@ -142,11 +141,11 @@ public class GameClient {
         switch (type) {
 
             case Protocol.ACK:
-                printLine("[OK] " + data);
+                printLine(UIUtil.success(data));
                 break;
 
             case Protocol.INFO:
-                printLine("[INFO] " + data);
+                printLine(UIUtil.info(data));
                 break;
 
             case Protocol.ROLE:
@@ -154,17 +153,19 @@ public class GameClient {
                 break;
 
             case Protocol.NEW_ROUND:
-                printLine("\n" + SEP);
-                printLine("RONDA " + data + " EN CURSO");
-                printLine(SEP);
+                System.out.println();
+                UIUtil.printSeparator();
+                System.out.println(UIUtil.coloredBold("RONDA " + data + " EN CURSO", UIUtil.CYAN));
+                UIUtil.printSeparator();
                 break;
 
             case Protocol.ORDER:
-                printLine("Orden de turno: " + data.replace(Protocol.LIST_SEP, " -> "));
+                printLine(UIUtil.info("Orden de turno: " + data.replace(Protocol.LIST_SEP, " → ")));
                 break;
 
             case Protocol.YOUR_TURN:
-                printLine("\n[TU TURNO] Escribe una palabra y pulsa Enter:");
+                System.out.println();
+                printLine(UIUtil.coloredBold("[TU TURNO] Escribe una palabra y pulsa Enter:", UIUtil.MAGENTA));
                 pendingAction = PendingAction.WORD;
                 break;
 
@@ -177,7 +178,8 @@ public class GameClient {
                 break;
 
             case Protocol.ASK_VOTE:
-                printLine("\n[VOTACION] Quieres votar para expulsar a alguien? (s/n):");
+                System.out.println();
+                printLine(UIUtil.highlight("[VOTACION] ¿Quieres votar para expulsar a alguien? (s/n):"));
                 pendingAction = PendingAction.VOTE_DECISION;
                 break;
 
@@ -191,8 +193,10 @@ public class GameClient {
                 break;
 
             case Protocol.GUESS_NOW:
-                printLine("\n[ULTIMA OPORTUNIDAD] Has sido expulsado y eras el impostor.");
-                printLine("Adivina la palabra secreta para intentar ganar:");
+                System.out.println();
+                printLine(
+                        UIUtil.coloredBold("[ULTIMA OPORTUNIDAD] Has sido expulsado y eras el impostor.", UIUtil.RED));
+                printLine(UIUtil.colored("Adivina la palabra secreta para intentar ganar:", UIUtil.YELLOW));
                 pendingAction = PendingAction.GUESS;
                 break;
 
@@ -202,11 +206,11 @@ public class GameClient {
                 break;
 
             case Protocol.ERROR:
-                printLine("[ERROR] " + data);
+                printLine(UIUtil.error(data));
                 break;
 
             default:
-                printLine("[?] " + raw);
+                printLine(UIUtil.warning("Mensaje desconocido: " + raw));
         }
     }
 
@@ -220,14 +224,21 @@ public class GameClient {
 
     /**
      * Procesa la entrada del usuario según la acción que el servidor esté
-     * esperando.
+     * esperando. Incluye validaciones para evitar errores.
      */
     private void processUserInput(String input) {
         switch (pendingAction) {
 
             case WORD:
-                send(Protocol.build(Protocol.WORD, input));
-                pendingAction = PendingAction.NONE;
+                String word = input.trim();
+                if (word.isEmpty()) {
+                    printLine(UIUtil.warning("La palabra no puede estar vacía."));
+                } else if (word.length() > 20) {
+                    printLine(UIUtil.warning("La palabra es demasiado larga (máx 20 caracteres)."));
+                } else {
+                    send(Protocol.build(Protocol.WORD, word));
+                    pendingAction = PendingAction.NONE;
+                }
                 break;
 
             case VOTE_DECISION:
@@ -240,7 +251,7 @@ public class GameClient {
             case VOTE:
                 String target = resolveVoteTarget(input);
                 if (target == null) {
-                    printLine("Selecciona un número válido de la lista.");
+                    printLine(UIUtil.error("Selecciona un número válido de la lista."));
                     break;
                 }
                 send(Protocol.build(Protocol.VOTE, target));
@@ -249,8 +260,13 @@ public class GameClient {
                 break;
 
             case GUESS:
-                send(Protocol.build(Protocol.GUESS, input));
-                pendingAction = PendingAction.NONE;
+                String guess = input.trim();
+                if (guess.isEmpty()) {
+                    printLine(UIUtil.warning("La adivinanza no puede estar vacía."));
+                } else {
+                    send(Protocol.build(Protocol.GUESS, guess));
+                    pendingAction = PendingAction.NONE;
+                }
                 break;
 
             case NONE:
@@ -269,23 +285,21 @@ public class GameClient {
         String rol = parts[0];
         String info = parts.length > 1 ? parts[1] : "";
         System.out.println();
-        System.out.println(SEP);
-        System.out.println("ROL ASIGNADO");
-        System.out.println(SEP);
+        UIUtil.printSeparator();
         if ("IMPOSTOR".equals(rol)) {
-            System.out.println("Tu rol: IMPOSTOR");
+            System.out.println(UIUtil.coloredBold("TU ROL: IMPOSTOR", UIUtil.RED));
             if ("SIN_PISTA".equals(info)) {
-                System.out.println("Pista: No tienes pista");
+                System.out.println(UIUtil.warning("Pista: No tienes pista"));
             } else {
-                System.out.println("Pista: " + info);
+                System.out.println(UIUtil.info("Pista: " + info));
             }
-            System.out.println("Objetivo: Pasa desapercibido y evita que te expulsen.");
+            System.out.println(UIUtil.colored("Objetivo: Pasa desapercibido y evita que te expulsen.", UIUtil.YELLOW));
         } else {
-            System.out.println("Tu rol: SOCIALISTA");
-            System.out.println("Palabra secreta: " + info);
-            System.out.println("Objetivo: Detecta al impostor y expulsalo.");
+            System.out.println(UIUtil.coloredBold("TU ROL: SOCIALISTA", UIUtil.GREEN));
+            System.out.println(UIUtil.success("Palabra secreta: " + info));
+            System.out.println(UIUtil.colored("Objetivo: Detecta al impostor y expulsalo.", UIUtil.YELLOW));
         }
-        System.out.println(SEP);
+        UIUtil.printSeparator();
     }
 
     private void printWordPlayed(String data) {
@@ -294,25 +308,29 @@ public class GameClient {
             String who = parts[0];
             String word = parts[1];
             if (who.equals(playerName)) {
-                printLine("  [TU CHAT] Tu dijiste: " + word);
+                printLine(UIUtil.colored("  [TU CHAT] Tu dijiste: " + UIUtil.coloredBold(word, UIUtil.GREEN),
+                        UIUtil.CYAN));
             } else {
-                printLine("  [CHAT] " + who + " dijo: " + word);
+                printLine(UIUtil.colored("  [CHAT] " + who + " dijo: " + UIUtil.coloredBold(word, UIUtil.YELLOW),
+                        UIUtil.CYAN));
             }
         }
     }
 
     private void printWordsSummary(String data) {
-        System.out.println("\n" + SEP);
-        System.out.println("RESUMEN DE LA RONDA");
-        System.out.println(SEP);
+        System.out.println();
+        UIUtil.printSeparator();
+        System.out.println(UIUtil.coloredBold("RESUMEN DE LA RONDA", UIUtil.CYAN));
+        UIUtil.printSeparator();
         for (String pair : data.split(Protocol.LIST_SEP)) {
             String[] kv = pair.split(Protocol.PAIR_SEP, 2);
             if (kv.length == 2) {
-                String marker = kv[0].equals(playerName) ? " (tú)" : "";
-                System.out.printf("- %-15s : %s%n", kv[0] + marker, kv[1]);
+                String marker = kv[0].equals(playerName) ? UIUtil.colored(" (tú)", UIUtil.GREEN) : "";
+                String word = UIUtil.colored(kv[1], UIUtil.YELLOW);
+                System.out.printf("  %-18s : %s%s%n", kv[0], word, marker);
             }
         }
-        System.out.println(SEP);
+        UIUtil.printSeparator();
     }
 
     private void printExpelled(String data) {
@@ -320,10 +338,15 @@ public class GameClient {
         String name = parts[0];
         boolean isImpostor = parts.length > 1 && Boolean.parseBoolean(parts[1]);
         System.out.println();
-        System.out.println(SEP);
-        System.out.println("JUGADOR EXPULSADO: " + name);
-        System.out.println("Era impostor: " + (isImpostor ? "SI" : "NO"));
-        System.out.println(SEP);
+        UIUtil.printSeparator();
+        if (isImpostor) {
+            System.out.println(UIUtil.coloredBold("¡¡IMPOSTOR EXPULSADO!!", UIUtil.RED));
+            System.out.println(UIUtil.colored("Jugador: " + name, UIUtil.YELLOW));
+        } else {
+            System.out.println(UIUtil.colored("Jugador expulsado: " + name, UIUtil.YELLOW));
+            System.out.println(UIUtil.success("Era socialista"));
+        }
+        UIUtil.printSeparator();
     }
 
     private void showVoteCandidates(String data) {
@@ -337,11 +360,12 @@ public class GameClient {
             }
         }
 
-        printLine("\n[VOTA] Elige a quien crees que es el impostor.");
+        System.out.println();
+        printLine(UIUtil.highlight("[VOTA] Elige a quien crees que es el impostor."));
         for (int i = 0; i < voteCandidates.size(); i++) {
-            printLine((i + 1) + ") " + voteCandidates.get(i));
+            printLine(UIUtil.formatOption(i + 1, voteCandidates.get(i)));
         }
-        printLine("Escribe el número de la persona:");
+        printLine(UIUtil.colored("Escribe el número de la persona:", UIUtil.BLUE));
     }
 
     private String resolveVoteTarget(String input) {
@@ -393,17 +417,18 @@ public class GameClient {
         String word = parts.length > 1 ? parts[1] : "?";
         String impostores = parts.length > 2 ? parts[2] : "?";
         System.out.println();
-        System.out.println(SEP);
-        System.out.println("FIN DE PARTIDA");
-        System.out.println(SEP);
+        UIUtil.printSeparator();
+        System.out.println(UIUtil.coloredBold("FIN DE PARTIDA", UIUtil.MAGENTA));
+        UIUtil.printSeparator();
         if ("SOCIALISTAS_WIN".equals(outcome)) {
-            System.out.println("Resultado: Ganan los socialistas");
+            System.out.println(UIUtil.success("¡GANAN LOS SOCIALISTAS!"));
         } else {
-            System.out.println("Resultado: Gana el impostor");
+            System.out.println(UIUtil.colored("¡GANA EL IMPOSTOR!", UIUtil.RED));
         }
-        System.out.println("Palabra secreta: " + word);
-        System.out.println("Impostor(es): " + impostores);
-        System.out.println(SEP);
+        System.out.println();
+        System.out.println(UIUtil.formatKeyValue("Palabra secreta", UIUtil.coloredBold(word, UIUtil.YELLOW)));
+        System.out.println(UIUtil.formatKeyValue("Impostor(es)", impostores));
+        UIUtil.printSeparator();
     }
 
     private void printLine(String msg) {
@@ -411,10 +436,9 @@ public class GameClient {
     }
 
     private void printWelcome() {
-        System.out.println(SEP);
-        System.out.println("JUEGO DEL IMPOSTOR - CLIENTE");
-        System.out.println(SEP);
-        System.out.println("Consejo: habla como si conocieras la palabra, pero sin decirla literal.");
+        UIUtil.printTitle("JUEGO DEL IMPOSTOR - CLIENTE");
+        System.out.println(UIUtil.info("Consejo: habla como si conocieras la palabra, pero sin decirla literal."));
+        System.out.println();
     }
 
     // ── Envío y cierre ────────────────────────────────────────────────────────
