@@ -91,14 +91,14 @@ public class GameServer {
             System.exit(1);
         }
 
-        System.out.println("╔══════════════════════════════════════════╗");
-        System.out.println("║       JUEGO DEL IMPOSTOR - SERVIDOR      ║");
-        System.out.println("╚══════════════════════════════════════════╝");
-        System.out.printf("  Puerto:      %d%n", port);
-        System.out.printf("  Jugadores:   %d%n", totalPlayers);
-        System.out.printf("  Impostores:  %d%n", numImpostors);
-        System.out.printf("  Pista:       %s%n", impostorHint ? "Sí" : "No");
-        System.out.println("  Esperando conexiones...");
+        System.out.println("\u001B[36m╔══════════════════════════════════════════╗\u001B[0m");
+        System.out.println("\u001B[36m║       JUEGO DEL IMPOSTOR - SERVIDOR      ║\u001B[0m");
+        System.out.println("\u001B[36m╚══════════════════════════════════════════╝\u001B[0m");
+        System.out.printf("  \u001B[1mPuerto:\u001B[0m      \u001B[33m%d\u001B[0m%n", port);
+        System.out.printf("  \u001B[1mJugadores:\u001B[0m   \u001B[33m%d\u001B[0m%n", totalPlayers);
+        System.out.printf("  \u001B[1mImpostores:\u001B[0m  \u001B[33m%d\u001B[0m%n", numImpostors);
+        System.out.printf("  \u001B[1mPista:\u001B[0m       \u001B[33m%s\u001B[0m%n", impostorHint ? "Sí" : "No");
+        System.out.println("  \u001B[32m✓ Esperando conexiones...\u001B[0m");
         System.out.println();
 
         // Crear sesión de juego compartida por todos los clientes
@@ -109,8 +109,8 @@ public class GameServer {
             while (!session.isFinished()) {
                 try {
                     Socket clientSocket = serverSocket.accept();
-                    System.out.println("Nueva conexión desde: " + clientSocket.getInetAddress()
-                            + "  (jugadores: " + session.getPlayerCount() + "/" + totalPlayers + ")");
+                    System.out.println("\u001B[32m✓ Nueva conexión:\u001B[0m " + clientSocket.getInetAddress()
+                            + "  (\u001B[33m" + session.getPlayerCount() + "/" + totalPlayers + "\u001B[0m)");
 
                     // Crear y lanzar hilo dedicado para este cliente
                     ClientHandler handler = new ClientHandler(clientSocket, session);
@@ -124,11 +124,12 @@ public class GameServer {
                 }
             }
         } catch (IOException e) {
+            System.err.println("\u001B[31m✗ Error: No se pudo abrir el puerto " + port + "\u001B[0m");
             LOG.log(Level.SEVERE, "No se pudo abrir el puerto " + port + ": " + e.getMessage());
             System.exit(1);
         }
 
-        System.out.println("Servidor finalizado.");
+        System.out.println("\u001B[32m✓ Servidor finalizado.\u001B[0m");
     }
 
     private static int askInt(Scanner scanner, String prompt, int defaultValue, int min, int max) {
@@ -140,12 +141,12 @@ public class GameServer {
             try {
                 int value = Integer.parseInt(line);
                 if (value < min || value > max) {
-                    System.out.printf("Valor fuera de rango (%d - %d).%n", min, max);
+                    System.out.printf("\u001B[33m⚠ Valor fuera de rango (%d - %d).\u001B[0m%n", min, max);
                     continue;
                 }
                 return value;
             } catch (NumberFormatException e) {
-                System.out.println("Introduce un numero valido.");
+                System.out.println("\u001B[31m✗ Introduce un número válido.\u001B[0m");
             }
         }
     }
@@ -162,7 +163,7 @@ public class GameServer {
             if (line.equals("n") || line.equals("no")) {
                 return false;
             }
-            System.out.println("Respuesta no valida. Escribe 's' o 'n'.");
+            System.out.println("\u001B[31m✗ Respuesta no válida. Escribe 's' o 'n'.\u001B[0m");
         }
     }
 }
