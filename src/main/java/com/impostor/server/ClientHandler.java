@@ -168,20 +168,34 @@ public class ClientHandler implements Runnable {
 
     // ── Cierre de conexión ────────────────────────────────────────────────────
 
+    /**
+     * Cierra la conexión de forma segura y limpia.
+     * Sincronizado para evitar cierres duplicados.
+     */
     private synchronized void disconnect() {
         if (disconnected) {
             return;
         }
         disconnected = true;
+
         try {
-            if (playerName != null)
+            if (playerName != null && !playerName.isEmpty()) {
                 session.removePlayer(playerName);
-            if (in != null)
+            }
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Error al notificar desconexión: " + e.getMessage());
+        }
+
+        try {
+            if (in != null) {
                 in.close();
-            if (out != null)
+            }
+            if (out != null) {
                 out.close();
-            if (socket != null && !socket.isClosed())
+            }
+            if (socket != null && !socket.isClosed()) {
                 socket.close();
+            }
             LOG.info("Conexión cerrada para: " + playerName);
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Error al cerrar conexión: " + e.getMessage());

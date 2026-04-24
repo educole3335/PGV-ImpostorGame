@@ -73,25 +73,37 @@ public class GameSession {
     /**
      * Registra un nuevo jugador. Devuelve false si el nombre ya existe o la sala
      * está llena.
+     * 
+     * Thread-safe: usa synchronized para evitar condiciones de carrera.
      */
     public synchronized boolean addPlayer(String name, ClientHandler handler) {
-        if (players.size() >= totalPlayers)
+        if (name == null || name.isEmpty()) {
             return false;
-        if (handlers.containsKey(name))
-            return false;
-
-        Player p = new Player(name);
-        players.add(p);
-        handlers.put(name, handler);
-        LOG.info("Jugador unido: " + name + " (" + players.size() + "/" + totalPlayers + ")");
-
-        broadcast(Protocol.build(Protocol.INFO,
-                name + " se ha unido. (" + players.size() + "/" + totalPlayers + ")"));
-
-        if (players.size() == totalPlayers) {
-            startGame();
         }
-        return true;
+        if (players.size() >= totalPlayers) {
+            return false;
+        }
+        if (handlers.containsKey(name)) {
+            return false;
+        }
+
+        try {
+            Player p = new Player(name);
+            players.add(p);
+            handlers.put(name, handler);
+            LOG.info("Jugador unido: " + name + " (" + players.size() + "/" + totalPlayers + ")");
+
+            broadcast(Protocol.build(Protocol.INFO,
+                    name + " se ha unido. (" + players.size() + "/" + totalPlayers + ")"));
+
+            if (players.size() == totalPlayers) {
+                startGame();
+            }
+            return true;
+        } catch (Exception e) {
+            LOG.log(java.util.logging.Level.SEVERE, "Error al agregar jugador: " + e.getMessage());
+            return false;
+        }
     }
 
     // ── Inicio y asignación de roles ─────────────────────────────────────────
@@ -356,13 +368,33 @@ public class GameSession {
 
     // ── Desconexión ───────────────────────────────────────────────────────────
 
+    /**
+     * Elimina un jugador cuando se desconecta. Notifica a otros jugadores
+     * y realiza limpieza necesaria.
+     * 
+     * Thread-safe para evitar duplicar desconexiones.
+     */
     public synchronized void removePlayer(String name) {
-        handlers.remove(name);
-        Player p = findPlayer(name);
-        if (p != null)
-            p.setEliminated(true);
-        broadcast(Protocol.build(Protocol.INFO, name + " se ha desconectado."));
-        LOG.warning("Jugador desconectado: " + name);
+        if (name == null || !handlers.containsKey(name)) {
+            return;
+        }
+
+        try {
+            handlers.remove(name);
+            Player p = findPlayer(name);
+            if (p != null) {
+                p.setEliminated(true);
+            }
+            broadcast(Protocol.build(Protocol.INFO, name + " se ha desconectado."));
+            LOG.warning("Jugador desconectado: " + name);
+
+            // Si todos se desconectaron, terminar la partida
+            if (getActivePlayers().isEmpty()) {
+                phase = Phase.FINISHED;
+            }
+        } catch (Exception e) {
+            LOG.log(java.util.logging.Level.WARNING, "Error al remover jugador: " + e.getMessage());
+        }
     }
 
     // ── Utilidades ────────────────────────────────────────────────────────────
