@@ -59,6 +59,13 @@ public class ClientHandler implements Runnable {
                 return;
             }
 
+            // Validar nombre: alfanumérico y espacios, máximo 20 caracteres
+            if (!playerName.matches("^[a-zA-Z0-9áéíóúñ ]{1,20}$")) {
+                sendMessage(Protocol.build(Protocol.ERROR,
+                        "Nombre inválido. Solo se permiten letras, números y espacios (máx 20 caracteres)"));
+                return;
+            }
+
             if (!session.addPlayer(playerName, this)) {
                 sendMessage(Protocol.build(Protocol.ERROR, "Nombre duplicado o sala llena"));
                 return;
@@ -82,28 +89,59 @@ public class ClientHandler implements Runnable {
 
     /**
      * Redirige cada mensaje recibido al método correspondiente de la sesión.
+     * Incluye validaciones básicas para garantizar robustez.
      */
     private void handleMessage(String raw) {
         String type = Protocol.getType(raw);
         String data = Protocol.getData(raw);
         LOG.fine("Recibido de " + playerName + ": " + raw);
 
+        // Validaciones básicas
+        if (type == null || type.isEmpty()) {
+            sendMessage(Protocol.build(Protocol.ERROR, "Tipo de mensaje vacío"));
+            return;
+        }
+
         switch (type) {
             case Protocol.WORD:
-                session.receiveWord(playerName, data);
+                // Validar palabra: no vacía, máximo 20 caracteres
+                String word = data.trim();
+                if (word.isEmpty()) {
+                    sendMessage(Protocol.build(Protocol.ERROR, "La palabra no puede estar vacía"));
+                } else if (word.length() > 20) {
+                    sendMessage(Protocol.build(Protocol.ERROR, "La palabra es demasiado larga (máx 20 caracteres)"));
+                } else {
+                    session.receiveWord(playerName, word);
+                }
                 break;
 
             case Protocol.VOTE_DECISION:
-                boolean wants = "YES".equalsIgnoreCase(data);
-                session.receiveVoteDecision(playerName, wants);
+                // Validar decisión de voto
+                if (!"YES".equalsIgnoreCase(data) && !"NO".equalsIgnoreCase(data)) {
+                    sendMessage(Protocol.build(Protocol.ERROR, "Decisión de voto inválida"));
+                } else {
+                    boolean wants = "YES".equalsIgnoreCase(data);
+                    session.receiveVoteDecision(playerName, wants);
+                }
                 break;
 
             case Protocol.VOTE:
-                session.receiveVote(playerName, data);
+                // Validar voto: nombre no vacío
+                if (data.trim().isEmpty()) {
+                    sendMessage(Protocol.build(Protocol.ERROR, "El voto no puede estar vacío"));
+                } else {
+                    session.receiveVote(playerName, data.trim());
+                }
                 break;
 
             case Protocol.GUESS:
-                session.receiveGuess(playerName, data);
+                // Validar adivinanza: no vacía
+                String guess = data.trim();
+                if (guess.isEmpty()) {
+                    sendMessage(Protocol.build(Protocol.ERROR, "La adivinanza no puede estar vacía"));
+                } else {
+                    session.receiveGuess(playerName, guess);
+                }
                 break;
 
             case Protocol.QUIT:
