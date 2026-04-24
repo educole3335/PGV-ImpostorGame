@@ -56,6 +56,9 @@ public class GameSession {
     private final Deque<String> pendingGuessQueue = new ArrayDeque<>();
     private String currentGuessingPlayer = null;
 
+    // Palabras dichas en la ronda actual (para evitar repeticiones)
+    private final Set<String> wordsInRound = Collections.synchronizedSet(new HashSet<>());
+
     enum Phase {
         LOBBY, ROLES, ROUND, VOTE_DECISION, VOTING, EXPELLED_GUESS, FINISHED
     }
@@ -161,6 +164,7 @@ public class GameSession {
         phase = Phase.ROUND;
         turnIndex = 0;
         wordCount.set(0);
+        wordsInRound.clear(); // Limpiar palabras de la ronda anterior
 
         List<Player> active = getActivePlayers();
         roundOrder = new ArrayList<>(active.stream().map(Player::getName).collect(Collectors.toList()));
@@ -198,7 +202,22 @@ public class GameSession {
         if (p == null || phase != Phase.ROUND)
             return;
 
+        // Validar que la palabra no esté repetida (normalizar a minúsculas para
+        // comparación)
+        String normalizedWord = word.trim().toLowerCase();
+        if (wordsInRound.contains(normalizedWord)) {
+            ClientHandler h = handlers.get(playerName);
+            if (h != null) {
+                h.sendMessage(Protocol.build(Protocol.ERROR,
+                        "Esa palabra ya ha sido dicha. Por favor, elige otra palabra."));
+                h.sendMessage(Protocol.build(Protocol.YOUR_TURN, ""));
+            }
+            LOG.info(playerName + " intentó repetir palabra: " + word);
+            return;
+        }
+
         p.setWordSaidThisRound(word);
+        wordsInRound.add(normalizedWord);
         wordCount.incrementAndGet();
         LOG.info(playerName + " dijo: " + word);
 
