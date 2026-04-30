@@ -2,6 +2,20 @@
     "configurations": [
         {
             "type": "java",
+            "name": "GameServer",
+            "request": "launch",
+            "mainClass": "com.impostor.server.GameServer",
+            "projectName": "PGV-ImpostorGame_40ac6fec"
+        },
+        {
+            "type": "java",
+            "name": "ImpostorGameApplication",
+            "request": "launch",
+            "mainClass": "com.impostor.ImpostorGameApplication",
+            "projectName": "PGV-ImpostorGame_40ac6fec"
+        },
+        {
+            "type": "java",
             "name": "GameClient",
             "request": "launch",
             "mainClass": "main.java.com.impostor.client.GameClient",
