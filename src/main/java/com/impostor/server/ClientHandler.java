@@ -1,9 +1,11 @@
 package com.impostor.server;
 
+import com.impostor.common.CryptoUtil;
 import com.impostor.common.Protocol;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,19 +43,20 @@ public class ClientHandler implements Runnable {
     public void run() {
         try {
             // Inicializar flujos de E/S
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
-            out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
 
             LOG.info("Cliente conectado desde: " + socket.getInetAddress());
 
             // Primer mensaje esperado: JOIN|nombre
             String line = in.readLine();
-            if (line == null || !Protocol.getType(line).equals(Protocol.JOIN)) {
+            String joinMessage = decodeIncoming(line);
+            if (line == null || !Protocol.getType(joinMessage).equals(Protocol.JOIN)) {
                 sendMessage(Protocol.build(Protocol.ERROR, "Se esperaba JOIN|nombre"));
                 return;
             }
 
-            playerName = Protocol.getData(line).trim();
+            playerName = Protocol.getData(joinMessage).trim();
             if (playerName.isEmpty()) {
                 sendMessage(Protocol.build(Protocol.ERROR, "El nombre no puede estar vacío"));
                 return;
@@ -92,9 +95,10 @@ public class ClientHandler implements Runnable {
      * Incluye validaciones básicas para garantizar robustez.
      */
     private void handleMessage(String raw) {
-        String type = Protocol.getType(raw);
-        String data = Protocol.getData(raw);
-        LOG.fine("Recibido de " + playerName + ": " + raw);
+        String message = decodeIncoming(raw);
+        String type = Protocol.getType(message);
+        String data = Protocol.getData(message);
+        LOG.fine("Recibido de " + playerName + ": " + message);
 
         // Validaciones básicas
         if (type == null || type.isEmpty()) {
@@ -162,7 +166,16 @@ public class ClientHandler implements Runnable {
      */
     public synchronized void sendMessage(String message) {
         if (out != null) {
-            out.println(message);
+            out.println(CryptoUtil.encrypt(message));
+        }
+    }
+
+    private String decodeIncoming(String encryptedRaw) {
+        try {
+            return CryptoUtil.decrypt(encryptedRaw);
+        } catch (IllegalStateException e) {
+            LOG.log(Level.WARNING, "No se pudo descifrar un mensaje entrante de " + playerName, e);
+            return "";
         }
     }
 
