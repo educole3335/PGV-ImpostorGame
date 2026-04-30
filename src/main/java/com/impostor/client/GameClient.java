@@ -1,10 +1,12 @@
 package com.impostor.client;
 
+import com.impostor.common.CryptoUtil;
 import com.impostor.common.Protocol;
 import com.impostor.common.UIUtil;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -84,8 +86,8 @@ public class GameClient {
     public void start() {
         try {
             socket = new Socket(host, port);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
-            out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
 
             printWelcome();
             System.out.println("Conectado al servidor " + host + ":" + port);
@@ -135,8 +137,18 @@ public class GameClient {
     // ── Procesamiento de mensajes del servidor ────────────────────────────────
 
     private void handleServerMessage(String raw) {
-        String type = Protocol.getType(raw);
-        String data = Protocol.getData(raw);
+        String message;
+
+        try {
+            message = CryptoUtil.decrypt(raw);
+        } catch (IllegalStateException e) {
+            LOG.log(Level.WARNING, "No se pudo descifrar un mensaje del servidor", e);
+            printLine(UIUtil.error("Se recibió un mensaje cifrado inválido."));
+            return;
+        }
+
+        String type = Protocol.getType(message);
+        String data = Protocol.getData(message);
 
         switch (type) {
 
@@ -210,7 +222,7 @@ public class GameClient {
                 break;
 
             default:
-                printLine(UIUtil.warning("Mensaje desconocido: " + raw));
+                printLine(UIUtil.warning("Mensaje desconocido: " + message));
         }
     }
 
@@ -444,8 +456,16 @@ public class GameClient {
     // ── Envío y cierre ────────────────────────────────────────────────────────
 
     private void send(String message) {
-        if (out != null)
-            out.println(message);
+        if (out == null) {
+            return;
+        }
+
+        try {
+            out.println(CryptoUtil.encrypt(message));
+        } catch (IllegalStateException e) {
+            LOG.log(Level.SEVERE, "No se pudo cifrar el mensaje saliente", e);
+            running = false;
+        }
     }
 
     private void disconnect() {

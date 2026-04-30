@@ -15,6 +15,7 @@
 6. [Compilación y ejecución](#6-compilación-y-ejecución)
 7. [Prueba de funcionamiento](#7-prueba-de-funcionamiento)
 8. [Control de excepciones](#8-control-de-excepciones)
+9. [Documentación de la práctica](#9-documentación-de-la-práctica)
 
 ---
 
@@ -321,3 +322,17 @@ Expulsado: Sara — ¿Era impostor? SÍ
 | Mensaje desconocido      | —                       | Respuesta `ERROR                               | Mensaje desconocido` |
 
 Todos los flujos de E/S (`Socket`, `BufferedReader`, `PrintWriter`) se cierran en bloques `finally` para garantizar la liberación de recursos independientemente de cómo termine la ejecución.
+
+---
+
+## 9. Documentación de la práctica
+
+Cada apartado de la práctica queda documentado en un archivo Markdown independiente para mantener el proceso ordenado y enlazado desde este README principal:
+
+1. [Apartado 1. Escaneo con Wireshark](docs/01-wireshark-trafico.md)
+2. [Apartado 2. Clase de cifrado y descifrado](docs/02-clase-cifrado.md)
+3. [Apartado 3. Tráfico cliente/servidor cifrado](docs/03-aplicacion-cifrada.md)
+4. [Apartado 4. Capturas de Wireshark con el tráfico protegido](docs/04-wireshark-trafico-cifrado.md)
+5. [Apartado 5. Esquema de seguridad basado en roles](docs/05-esquema-seguridad-roles.md)
+
+Las capturas de Wireshark pueden adjuntarse más adelante en esos documentos si quieres completar la evidencia visual de la práctica.
