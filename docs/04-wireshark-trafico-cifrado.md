@@ -13,6 +13,7 @@ Tras activar el cifrado, una nueva captura de Wireshark debe mostrar que el cont
 Inserta aquí dos evidencias:
 
 1. Un paquete cliente → servidor con el mensaje cifrado.
+
 2. Un paquete servidor → cliente con la respuesta cifrada.
 
 ## Criterio de validación
