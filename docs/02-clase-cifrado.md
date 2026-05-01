@@ -12,7 +12,3 @@ Se añadió la clase [CryptoUtil](../src/main/java/com/impostor/common/CryptoUti
 
 - `encrypt(texto)`: convierte el mensaje legible en una cadena cifrada.
 - `decrypt(textoCifrado)`: recupera el mensaje original para que el protocolo siga funcionando igual.
-
-## Nota técnica
-
-En un proyecto real, la frase secreta debería venir de variables de entorno o de un almacén seguro de secretos. En esta práctica se usa una clave compartida fija para simplificar la demostración.
