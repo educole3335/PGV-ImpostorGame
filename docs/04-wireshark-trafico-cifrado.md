@@ -82,10 +82,7 @@ brew install --cask wireshark
   3.  Envía una palabra o comando adicional.
 - Déjalo capturar durante 10–20 segundos para asegurar que hay tráfico suficiente.
 
-### 7. **Detén la captura**
 
-- Haz clic en el botón rojo **"Stop"** (barra de herramientas superior).
-- Wireshark mostrará todos los paquetes capturados.
 
 ---
 
@@ -179,3 +176,5 @@ Incluye en tu entrega (commits a `develop`):
 - ✅ Tráfico cifrado capturado (payload no es JSON/texto plano obvio).
 - ✅ Capturas guardadas y añadidas a la rama `develop`.
 - ✅ Commit realizado: `docs: add encrypted wireshark evidence`.
+
+![alt text](image.png)
